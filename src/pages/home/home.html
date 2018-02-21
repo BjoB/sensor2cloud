@@ -1,0 +1,29 @@
+<ion-header>
+  <ion-navbar>
+
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    
+    <ion-title>sensor2cloud</ion-title>
+
+    <ion-buttons start>
+        <button ion-button icon-only color="royal" (click)="scanStartOrStop()">
+          {{ scanStarted ? 'Stop Scan' : 'Start Scan' }}
+          <ion-icon [name]="scanStarted ? 'hand' : 'search'"></ion-icon>
+        </button>
+    </ion-buttons>
+
+  </ion-navbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <button ion-item *ngFor="let device of devices" (click)="onDeviceSelected(device)">
+      <ion-icon name="bluetooth" item-start></ion-icon>
+      <h2>{{device}}</h2>
+      <h3>Test123</h3>
+      <ion-icon name="arrow-forward" item-end></ion-icon>
+    </button> 
+  </ion-list>
+</ion-content>
