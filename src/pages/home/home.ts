@@ -4,8 +4,9 @@ import { ToastController } from 'ionic-angular';
 import { BLE } from '@ionic-native/ble';
 
 
-const SENSORTAG_TEMP_SERVICE = 'A002';
-const SENSORTAG_TEMP_CHARACTERISTIC = 'A005';
+const SENSORTAG_TEMP_SERVICE = 'f000aa20-0451-4000-b000-000000000000';
+const SENSORTAG_TEMP_CHARACTERISTIC = 'f000aa21-0451-4000-b000-000000000000';
+const SENSORTAG_DEVICE_NAME = 'CC2650 SensorTag';
 
 
 // interface DeviceObject {
@@ -33,7 +34,7 @@ export class HomePage {
     this.devices = [];
     this.scanStarted = true;
 
-    this.ble.startScan([SENSORTAG_TEMP_SERVICE]).subscribe(
+    this.ble.startScan([]).subscribe(
       device => this.onDeviceDiscovered(device), 
       error => this.onScanError(error)
     );
@@ -44,9 +45,7 @@ export class HomePage {
   stopScan() {
     this.ble.stopScan().then(() => {
       this.scanStarted = false;
-      this.ble.stopScan().then(
-        () => this.setStatus('Scanning stopped.')
-      );
+      this.setStatus('Scanning stopped.');
     });
   }
 
@@ -60,41 +59,50 @@ export class HomePage {
 
   onDeviceDiscovered(device) {
     console.log('Discovered ' + JSON.stringify(device, null, 2));
-    this.ble.connect(device.id).subscribe(
-      peripheralData => {
-        this.onConnected(peripheralData);
-      }, 
-      peripheralData => {
-        console.log((peripheralData.name || peripheralData.id) + ' disconnected.');
-      }
-    );
+
+    if (device.name == SENSORTAG_DEVICE_NAME) {
+      this.ble.connect(device.id).subscribe(
+        peripheralData => {
+          this.onConnected(peripheralData);
+        }, 
+        peripheralData => {
+          console.log((peripheralData.name || peripheralData.id) + ' disconnected.');
+        }
+      );
+    }
   }
 
   onConnected(peripheralData) {
     this.setStatus('Connected to ' + (peripheralData.name || peripheralData.id));
+    //console.log('Peripheral informations: ' + JSON.stringify(peripheralData, null, 2));
 
     var deviceData = {
       name: peripheralData.name,
       id: peripheralData.id,
-      temp: '-'
+      temperature: 0.0,
+      humidity: 0.0
     };
-
-    if (this.devices.find(device => device.id == peripheralData.id) === undefined) {
+    
+    if (this.devices.find(device => device.id == peripheralData.id) == undefined) {
+      //TODO: Index anhängen, da mehrere Sensortags vorhanden sein können -> 'uniqueName' als property setzen
       this.devices.push(deviceData);
-    }
 
-    this.ble.startNotification(peripheralData.id, SENSORTAG_TEMP_SERVICE, SENSORTAG_TEMP_CHARACTERISTIC).subscribe(
-      data => {
-        var tempData = new Float32Array(data);
-        var tempVal = tempData[0]; //TODO: Format
-        
-        var notifyingDevice = this.devices.find(device => device.id == peripheralData.id);
-        if (notifyingDevice !== undefined) {
-          notifyingDevice.temp = tempVal;
-        }
-      },
-      () => console.log('Unexpected Error: Failed to subscribe for temperature changes.')
-    );
+      this.ble.startNotification(peripheralData.id, SENSORTAG_TEMP_SERVICE, SENSORTAG_TEMP_CHARACTERISTIC).subscribe(
+        buffer => {
+          var sensorData = new Uint16Array(buffer);
+          var rawTemp = sensorData[0];
+          var rawHum = sensorData[1];
+          var temp = (rawTemp / 65536)*165 - 40;
+          //rawHum &= ~0x0003;
+          var hum = (rawHum / 65536)*100;
+
+          deviceData.temperature = temp;
+          deviceData.humidity = temp;
+          console.log('Temperature: ' + temp.toString + '°C');
+        },
+        () => console.log('Unexpected Error: Failed to subscribe for temperature changes.')
+      );
+    }
   }
 
   onScanError(error) {
