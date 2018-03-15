@@ -21,8 +21,9 @@
   <ion-list>
     <button ion-item *ngFor="let device of devices" (click)="onDeviceSelected(device)">
       <ion-icon name="bluetooth" item-start></ion-icon>
-      <h2>{{device}}</h2>
-      <h3>Test123</h3>
+      <h2>{{device.name}}</h2>
+      <h2>{{device.id}}</h2>
+      <h3>{{device.temperature}} °C -- {{device.humidity}} %</h3>
       <ion-icon name="arrow-forward" item-end></ion-icon>
     </button> 
   </ion-list>
