@@ -143,7 +143,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "collection", type=str, help="mongodb collection for storage of results")
     parser.add_argument(
-        "sendinterval", type=int, help="send interval to database [s]")    
+        "sendinterval", type=int, help="send interval to database [s]")
     args = parser.parse_args()
 
     client = MongoClient(args.mongodburi)
